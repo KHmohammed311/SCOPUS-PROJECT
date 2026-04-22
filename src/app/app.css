@@ -1,7 +1,37 @@
+.app-wrapper {
+  min-height: 100vh;
+  background-color: #f7f9fa;
+}
+
+.breadcrumb-bar {
+  background: white;
+  border-bottom: 1px solid #eee;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #1b4986;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+.back-btn:hover { text-decoration: underline; }
+
+.breadcrumb-sep { color: #ccc; }
+.breadcrumb-team { color: #555; font-weight: 500; }
+
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px 60px;
+  padding: 24px 20px 60px;
 }
 
 .main-content-grid {
@@ -11,22 +41,47 @@
   align-items: start;
 }
 
-.left-column {
-  /* No specific styles needed, grid handles it */
-}
-
-.right-column {
-  /* No specific styles needed, grid handles it */
-}
-
 .error-banner {
   background-color: #fee2e2;
   color: #991b1b;
-  padding: 16px;
+  padding: 14px 16px;
   border-radius: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-align: center;
   font-weight: 500;
+  font-size: 14px;
+}
+
+/* Welcome state */
+.welcome-state {
+  text-align: center;
+  padding: 60px 24px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.welcome-icon { font-size: 52px; margin-bottom: 16px; }
+.welcome-state h2 {
+  font-size: 20px;
+  color: #1b4986;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+.welcome-state p {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+}
+.welcome-hint { color: #888; font-size: 13px; }
+.link-btn {
+  background: none;
+  border: none;
+  color: #eb6c34;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {

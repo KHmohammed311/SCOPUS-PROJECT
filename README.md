@@ -1,59 +1,138 @@
-# Scopus
+# SCOPUS Research Explorer — Université Mohammed V de Rabat
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.2.
+Application web Angular permettant de rechercher et d'analyser les publications scientifiques des chercheurs de l'Université Mohammed V de Rabat via l'API Scopus (Elsevier).
 
-## Development server
+---
 
-To start a local development server, run:
+## Fonctionnalités
+
+### 🔍 Recherche d'auteurs
+- Recherche par prénom et/ou nom, filtrée automatiquement sur les affiliés à l'Université Mohammed V (Maroc)
+- Sélection d'un auteur pour charger l'ensemble de ses publications
+
+### 📊 Synthèse auteur (carte de résumé)
+- Tableau récapitulatif affiché en haut des résultats
+- Décompte par type de publication : Article, Conference Paper, Book Chapter, Review
+- Colonnes : 1er auteur / 2ème auteur / Total
+- Seules les publications où l'auteur est en 1ère ou 2ème position sont comptabilisées
+
+### 🎯 Tri et filtres
+- Tri par date de publication décroissante par défaut
+- **Filtre rang auteur** : Tous / 1er auteur / 2ème auteur
+- **Filtre année** : dropdown dynamique généré à partir des résultats
+- **Filtre type** : cases à cocher multiples (Article, Conference, Book Chapter, Review)
+- Filtres combinables, réactifs et réinitialisables
+- La carte de synthèse reflète toujours les totaux globaux (non affectée par les filtres)
+
+### 👥 Gestion d'équipes
+- Créer des équipes nommées et y ajouter des chercheurs (recherche via Scopus)
+- Équipes persistées en localStorage (pas de backend nécessaire)
+- Lister, modifier et supprimer des équipes
+- **Recherche équipe** : récupération parallèle (`Promise.all`) des publications de tous les membres, avec déduplication par EID (un article co-signé par deux membres n'apparaît qu'une fois)
+- **Carte de synthèse équipe** : total unique, répartition par type, top contributeurs (publications + 1er auteur), plage d'années d'activité
+- Mêmes filtres disponibles dans la vue équipe
+
+### 📈 Classement SJR des journaux
+- Pour chaque Article ou Review, un bouton "Voir classement journal ▾" (replié par défaut)
+- Affiche l'évolution du quartile SJR sur ±2 ans autour de l'année de publication
+- Données via l'API SCImago (proxy Express pour contourner le CORS)
+- Couleurs : Q1 = vert foncé · Q2 = vert clair · Q3 = orange · Q4 = rouge
+- Dégradation gracieuse si le journal n'est pas indexé dans SCImago
+
+---
+
+## Stack technique
+
+| Couche | Technologie |
+|---|---|
+| Framework | Angular 21 (standalone components) |
+| Rendu | Angular SSR (`@angular/ssr`) |
+| Serveur | Express 5 |
+| API données | Scopus / Elsevier REST API |
+| API classements | SCImago Journal Rank (proxy Express) |
+| Persistance équipes | localStorage |
+| Styles | CSS inline (sans bibliothèque UI) |
+
+---
+
+## Prérequis
+
+- **Node.js** ≥ 20
+- **npm** ≥ 9
+- Une **clé API Scopus** valide (déjà configurée dans `src/app/services/scopus.service.ts`)
+- Accès réseau direct à `api.elsevier.com` (VPN désactivé recommandé)
+
+---
+
+## Installation
 
 ```bash
-ng serve
+git clone https://github.com/KHmohammed311/SCOPUS-PROJECT.git
+cd SCOPUS-PROJECT
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## Lancer l'application
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Mode développement
 
 ```bash
-ng generate component component-name
+npm start
+# → http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Mode production (SSR complet)
 
 ```bash
-ng generate --help
+npm run build
+node dist/scopus/server/server.mjs
+# → http://localhost:4000
 ```
 
-## Building
+---
 
-To build the project run:
+## Structure du projet
 
-```bash
-ng build
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── author-summary/        # Carte de synthèse auteur (F1)
+│   │   ├── sjr-timeline/          # Timeline SJR par journal (F4)
+│   │   ├── publication-list/      # Liste des publications + filtres (F2)
+│   │   ├── author-list/           # Liste des auteurs trouvés
+│   │   ├── search/                # Formulaire de recherche
+│   │   ├── header/                # En-tête + navigation
+│   │   ├── team-modal/            # Modal création/édition équipe (F3)
+│   │   ├── team-list/             # Liste des équipes (F3)
+│   │   └── team-publications/     # Publications + synthèse équipe (F3)
+│   ├── services/
+│   │   ├── scopus.service.ts      # Appels API Scopus (auteurs + publications)
+│   │   └── team.service.ts        # CRUD équipes (localStorage)
+│   ├── app.ts                     # Composant racine
+│   ├── app.html                   # Template principal
+│   └── app.css                    # Styles globaux de l'app
+├── server.ts                      # Express SSR + proxy SCImago
+└── styles.css                     # Styles globaux (reset, fonts)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## Configuration de la clé API
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+La clé Scopus est définie dans `src/app/services/scopus.service.ts` :
 
-```bash
-ng test
+```typescript
+private readonly API_KEY = 'VOTRE_CLE_API';
 ```
 
-## Running end-to-end tests
+> ⚠️ Pour un déploiement public, déplacez la clé dans une variable d'environnement et ne la commitez pas en clair.
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
+## Auteur
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Développé pour l'Université Mohammed V de Rabat.  
+Données scientifiques fournies par [Scopus / Elsevier](https://www.scopus.com) et [SCImago Journal Rank](https://www.scimagojr.com).

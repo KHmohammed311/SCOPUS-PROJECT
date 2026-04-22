@@ -30,6 +30,19 @@ export interface Publication {
   authors: string;
   moreAuthors: string;
   authorRank: number | null;
+  issn: string;
+  eissn: string;
+}
+
+export interface MemberStats {
+  name: string;
+  total: number;
+  firstAuthor: number;
+}
+
+export interface TeamPublicationsResult {
+  memberStats: { [authorId: string]: MemberStats };
+  uniquePubs: Publication[];
 }
 
 @Injectable({
@@ -40,7 +53,6 @@ export class ScopusService {
   private readonly BASE_URL = 'https://api.elsevier.com';
   private readonly AUTHORS_PER_PAGE = 12;
 
-  // Affiliation variants from app.js
   private readonly AFFIL_VARIANTS = [
     '"Mohamed V"',
     '"Mohammed V"',
@@ -72,7 +84,7 @@ export class ScopusService {
       .set('view', 'STANDARD');
 
     const data: any = await firstValueFrom(this.http.get(`${this.BASE_URL}/content/search/author`, { params, headers: { 'X-ELS-APIKey': this.API_KEY } }));
-    
+
     const results = data['search-results'];
     const total = parseInt(results?.['opensearch:totalResults'] || '0', 10);
     const entries = results?.entry || [];
@@ -95,7 +107,7 @@ export class ScopusService {
     const citedByCount = e['cited-by-count'] || '—';
     const coauthorCount = e['coauthor-count'] || '—';
     const hIndex = e['h-index'] || '—';
-  
+
     const affils = e['affiliation-current'];
     let affiliation = '';
     if (Array.isArray(affils)) {
@@ -105,12 +117,12 @@ export class ScopusService {
       affiliation = [affils['affiliation-name'], affils['affiliation-city'], affils['affiliation-country']]
         .filter(Boolean).join(', ');
     }
-  
+
     const areas = e['subject-area'];
     const subjects = Array.isArray(areas)
       ? areas.slice(0, 3).map((a: any) => a['$']).join(', ')
       : (areas?.['$'] || '');
-  
+
     return { authorId, fullName, surname, givenName, affiliation, docCount, citedByCount, coauthorCount, hIndex, subjects };
   }
 
@@ -119,9 +131,8 @@ export class ScopusService {
     let start = 0;
     const perPage = 25;
     let total = 0;
+    const maxFetch = 2000;
 
-    let maxRetries = 2000;
-    
     do {
       const params = new HttpParams()
         .set('apiKey', this.API_KEY)
@@ -131,10 +142,10 @@ export class ScopusService {
         .set('start', start)
         .set('view', 'COMPLETE')
         .set('sort', 'coverDate,desc')
-        .set('field', 'dc:title,prism:publicationName,prism:coverDate,prism:doi,citedby-count,subtypeDescription,eid,prism:volume,prism:issueIdentifier,prism:pageRange,author');
+        .set('field', 'dc:title,prism:publicationName,prism:coverDate,prism:doi,citedby-count,subtypeDescription,eid,prism:volume,prism:issueIdentifier,prism:pageRange,author,prism:issn,prism:eIssn');
 
       const data: any = await firstValueFrom(this.http.get(`${this.BASE_URL}/content/search/scopus`, { params, headers: { 'X-ELS-APIKey': this.API_KEY } }));
-      
+
       const results = data['search-results'];
       total = parseInt(results?.['opensearch:totalResults'] || '0', 10);
       const entries = results?.entry || [];
@@ -144,7 +155,6 @@ export class ScopusService {
       entries.forEach((e: any) => {
         if (e['dc:title']) {
           const pub = this.parsePubEntry(e, authorId);
-          // Only return 1st or 2nd author publications
           if (pub.authorRank === 1 || pub.authorRank === 2) {
             allPubs.push(pub);
           }
@@ -152,9 +162,48 @@ export class ScopusService {
       });
 
       start += perPage;
-    } while (start < total && start < maxRetries);
+    } while (start < total && start < maxFetch);
 
     return { total: allPubs.length, pubs: allPubs };
+  }
+
+  async fetchTeamPublications(members: { authorId: string; fullName: string }[]): Promise<TeamPublicationsResult> {
+    const results = await Promise.all(
+      members.map(async (member) => ({
+        member,
+        pubs: (await this.fetchPublications(member.authorId)).pubs
+      }))
+    );
+
+    const memberStats: { [authorId: string]: MemberStats } = {};
+
+    // For deduplication: prefer lower authorRank when same EID appears multiple times
+    const eidBestPub = new Map<string, Publication>();
+
+    results.forEach(({ member, pubs }) => {
+      memberStats[member.authorId] = {
+        name: member.fullName,
+        total: pubs.length,
+        firstAuthor: pubs.filter(p => p.authorRank === 1).length
+      };
+
+      pubs.forEach(pub => {
+        const existing = eidBestPub.get(pub.eid);
+        if (!existing) {
+          eidBestPub.set(pub.eid, pub);
+        } else if (
+          pub.authorRank !== null &&
+          (existing.authorRank === null || pub.authorRank < existing.authorRank)
+        ) {
+          eidBestPub.set(pub.eid, pub);
+        }
+      });
+    });
+
+    const uniquePubs = Array.from(eidBestPub.values())
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    return { memberStats, uniquePubs };
   }
 
   private parsePubEntry(e: any, authorId: string): Publication {
@@ -169,10 +218,12 @@ export class ScopusService {
     const volume = e['prism:volume'] || '';
     const issue = e['prism:issueIdentifier'] || '';
     const pages = e['prism:pageRange'] || '';
-  
+    const issn = e['prism:issn'] || '';
+    const eissn = e['prism:eIssn'] || '';
+
     const authorArr = e['author'] || [];
     const authorsArray = Array.isArray(authorArr) ? authorArr : (authorArr ? [authorArr] : []);
-  
+
     let authorRank: number | null = null;
     if (authorId) {
       const targetId = String(authorId);
@@ -184,18 +235,17 @@ export class ScopusService {
         if (idx !== -1) authorRank = idx + 1;
       }
     }
-  
+
     const authors = authorsArray.slice(0, 5).map((a: any) => a['authname'] || '').filter(Boolean).join(', ');
     const moreAuthors = authorsArray.length > 5 ? ` +${authorsArray.length - 5} more` : '';
 
-    // Standardize types according to user request: "Article, Review, Conference, or Book Chapter"
     const lowerType = type.toLowerCase();
     if (lowerType.includes('article')) type = 'Article';
     else if (lowerType.includes('review')) type = 'Review';
     else if (lowerType.includes('conference') || lowerType.includes('proceeding')) type = 'Conference';
     else if (lowerType.includes('book')) type = 'Book Chapter';
-    else type = 'Article'; // default fallback or keep original
-  
-    return { title, journal, date, year, doi, cited: parseInt(cited, 10), type, eid, volume, issue, pages, authors, moreAuthors, authorRank };
+    else type = 'Article';
+
+    return { title, journal, date, year, doi, cited: parseInt(cited, 10), type, eid, volume, issue, pages, authors, moreAuthors, authorRank, issn, eissn };
   }
 }

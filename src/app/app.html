@@ -1,30 +1,76 @@
-<div class="app-container">
-  
-  <app-header></app-header>
+<div class="app-wrapper">
 
-  <app-search (search)="onSearch($event)"></app-search>
+  <app-header
+    (showTeams)="goToTeams()"
+    (createTeam)="openTeamModal()">
+  </app-header>
 
-  <div class="error-banner" *ngIf="error">
-    {{ error }}
+  <!-- Breadcrumb nav for non-search views -->
+  <div class="breadcrumb-bar" *ngIf="view !== 'search'">
+    <button class="back-btn" (click)="goToSearch()">← Retour à la recherche</button>
+    <span class="breadcrumb-sep" *ngIf="view === 'team-pubs'">/</span>
+    <span class="breadcrumb-team" *ngIf="view === 'team-pubs' && selectedTeam">{{ selectedTeam.name }}</span>
   </div>
 
-  <div class="main-content-grid" *ngIf="authors.length > 0 || loadingAuthors">
-    <div class="left-column">
-      <app-author-list 
-        [authors]="authors" 
-        [loading]="loadingAuthors"
-        [selectedAuthor]="selectedAuthor"
-        (authorSelect)="onAuthorSelect($event)">
-      </app-author-list>
+  <div class="app-container">
+
+    <!-- ── SEARCH VIEW ── -->
+    <div *ngIf="view === 'search'">
+      <app-search (search)="onSearch($event)"></app-search>
+
+      <div class="error-banner" *ngIf="error">{{ error }}</div>
+
+      <div class="main-content-grid" *ngIf="authors.length > 0 || loadingAuthors">
+        <div class="left-column">
+          <app-author-list
+            [authors]="authors"
+            [loading]="loadingAuthors"
+            [selectedAuthor]="selectedAuthor"
+            (authorSelect)="onAuthorSelect($event)">
+          </app-author-list>
+        </div>
+        <div class="right-column">
+          <app-publication-list
+            [author]="selectedAuthor"
+            [publications]="publications"
+            [loading]="loadingPublications">
+          </app-publication-list>
+        </div>
+      </div>
+
+      <!-- Welcome state when no search yet -->
+      <div class="welcome-state" *ngIf="authors.length === 0 && !loadingAuthors && !error">
+        <div class="welcome-icon">🔬</div>
+        <h2>Explorez les publications de l'Université Mohammed V</h2>
+        <p>Recherchez un auteur par prénom et/ou nom pour voir ses publications Scopus.</p>
+        <p class="welcome-hint">Vous pouvez aussi <button class="link-btn" (click)="goToTeams()">gérer des équipes</button> pour analyser plusieurs chercheurs simultanément.</p>
+      </div>
     </div>
-    
-    <div class="right-column">
-      <app-publication-list 
-        [author]="selectedAuthor" 
-        [publications]="publications" 
-        [loading]="loadingPublications">
-      </app-publication-list>
+
+    <!-- ── TEAMS VIEW ── -->
+    <div *ngIf="view === 'teams'">
+      <app-team-list
+        [teams]="teams"
+        (createTeam)="openTeamModal()"
+        (editTeam)="openTeamModal($event)"
+        (deleteTeam)="onDeleteTeam($event)"
+        (viewTeam)="onViewTeam($event)">
+      </app-team-list>
     </div>
+
+    <!-- ── TEAM PUBLICATIONS VIEW ── -->
+    <div *ngIf="view === 'team-pubs' && selectedTeam">
+      <app-team-publications [team]="selectedTeam"></app-team-publications>
+    </div>
+
   </div>
+
+  <!-- Team Modal (global overlay) -->
+  <app-team-modal
+    *ngIf="showTeamModal"
+    [team]="editingTeam"
+    (close)="closeTeamModal()"
+    (save)="onTeamSave($event)">
+  </app-team-modal>
 
 </div>
