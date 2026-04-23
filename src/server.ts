@@ -12,45 +12,30 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+const SCOPUS_API_KEY = 'd451936c59628276f68eb43266872213';
+
 /**
- * SCImago SJR proxy — avoids browser CORS.
- * Scopus returns ISSNs as "20411723" (no dash); SCImago expects "2041-1723".
+ * Scopus Serial Title proxy — fetches journal quartile/CiteScore data by ISSN.
+ * Uses view=CITESCORE to get per-year percentile → Q1/Q2/Q3/Q4.
  */
-app.get('/api/sjr', async (req, res) => {
+app.get('/api/journal-rank', async (req, res) => {
   const rawIssn = (req.query as Record<string, string>)['issn'];
-  if (!rawIssn) {
-    res.status(400).json({ error: 'Missing issn parameter' });
-    return;
-  }
+  if (!rawIssn) { res.status(400).json({ error: 'Missing issn' }); return; }
 
-  // Normalize: strip non-alphanumeric then insert dash after 4th char
-  const clean = rawIssn.replace(/[^0-9Xx]/g, '');
-  const issn = clean.length === 8 ? `${clean.slice(0, 4)}-${clean.slice(4)}` : rawIssn;
-
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'application/json, text/plain, */*',
-    'Referer': 'https://www.scimagojr.com/',
-  };
+  // Normalize ISSN: ensure dash is present (Scopus returns "1087-0156" format)
+  const digits = rawIssn.replace(/[^0-9Xx]/g, '');
+  const issn = digits.length === 8 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : rawIssn;
 
   try {
-    const url = `https://www.scimagojr.com/journalsearch.php?q=${encodeURIComponent(issn)}&tip=issn&output=json`;
-    const response = await fetch(url, { headers });
-
-    if (!response.ok) {
-      res.json([]); // treat as no data rather than error
-      return;
-    }
-
-    const text = await response.text();
-    try {
-      const data = JSON.parse(text);
-      res.json(data);
-    } catch {
-      res.json([]); // HTML response = journal not found
-    }
+    const url = `https://api.elsevier.com/content/serial/title/issn/${encodeURIComponent(issn)}?view=CITESCORE&apiKey=${SCOPUS_API_KEY}`;
+    const response = await fetch(url, {
+      headers: { 'X-ELS-APIKey': SCOPUS_API_KEY, 'Accept': 'application/json' },
+    });
+    if (!response.ok) { res.json(null); return; }
+    const data = await response.json();
+    res.json(data);
   } catch {
-    res.json([]); // network failure — return empty so UI shows "non disponible"
+    res.json(null);
   }
 });
 

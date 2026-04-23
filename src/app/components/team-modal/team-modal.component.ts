@@ -127,6 +127,7 @@ import { Team, TeamMember, TeamService } from '../../services/team.service';
 
     .modal-body {
       flex: 1;
+      min-height: 0;       /* critical: allows flexbox child to shrink and scroll */
       overflow-y: auto;
       padding: 20px 24px;
       display: flex;
@@ -177,6 +178,8 @@ import { Team, TeamMember, TeamService } from '../../services/team.service';
       border: 1px solid #e2e8f0;
       border-radius: 6px;
       overflow: hidden;
+      max-height: 240px;
+      overflow-y: auto;
     }
     .results-label {
       font-size: 11px;
