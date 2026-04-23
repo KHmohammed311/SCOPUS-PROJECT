@@ -6,17 +6,17 @@ Application web Angular permettant de rechercher et d'analyser les publications 
 
 ## Fonctionnalités
 
-### 🔍 Recherche d'auteurs
+###  Recherche d'auteurs
 - Recherche par prénom et/ou nom, filtrée automatiquement sur les affiliés à l'Université Mohammed V (Maroc)
 - Sélection d'un auteur pour charger l'ensemble de ses publications
 
-### 📊 Synthèse auteur (carte de résumé)
+###  Synthèse auteur (carte de résumé)
 - Tableau récapitulatif affiché en haut des résultats
 - Décompte par type de publication : Article, Conference Paper, Book Chapter, Review
 - Colonnes : 1er auteur / 2ème auteur / Total
 - Seules les publications où l'auteur est en 1ère ou 2ème position sont comptabilisées
 
-### 🎯 Tri et filtres
+###  Tri et filtres
 - Tri par date de publication décroissante par défaut
 - **Filtre rang auteur** : Tous / 1er auteur / 2ème auteur
 - **Filtre année** : dropdown dynamique généré à partir des résultats
@@ -24,7 +24,7 @@ Application web Angular permettant de rechercher et d'analyser les publications 
 - Filtres combinables, réactifs et réinitialisables
 - La carte de synthèse reflète toujours les totaux globaux (non affectée par les filtres)
 
-### 👥 Gestion d'équipes
+###  Gestion d'équipes
 - Créer des équipes nommées et y ajouter des chercheurs (recherche via Scopus)
 - Équipes persistées en localStorage (pas de backend nécessaire)
 - Lister, modifier et supprimer des équipes
@@ -32,7 +32,7 @@ Application web Angular permettant de rechercher et d'analyser les publications 
 - **Carte de synthèse équipe** : total unique, répartition par type, top contributeurs (publications + 1er auteur), plage d'années d'activité
 - Mêmes filtres disponibles dans la vue équipe
 
-### 📈 Classement SJR des journaux
+###  Classement SJR des journaux
 - Pour chaque Article ou Review, un bouton "Voir classement journal ▾" (replié par défaut)
 - Affiche l'évolution du quartile SJR sur ±2 ans autour de l'année de publication
 - Données via l'API SCImago (proxy Express pour contourner le CORS)
