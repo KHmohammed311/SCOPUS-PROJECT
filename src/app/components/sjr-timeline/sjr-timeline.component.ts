@@ -18,7 +18,6 @@ interface YearRank {
   template: `
     <div class="jr-wrap">
       <button class="jr-toggle" (click)="toggle()">
-        <span class="jr-toggle-icon">📊</span>
         Classement du journal
         <span class="jr-chevron">{{ expanded ? '▲' : '▾' }}</span>
       </button>
@@ -113,7 +112,6 @@ interface YearRank {
       background: #dde8fa;
       border-color: #1b4986;
     }
-    .jr-toggle-icon { font-size: 13px; }
     .jr-chevron { font-size: 10px; margin-left: 2px; }
 
     /* Panel */

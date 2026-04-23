@@ -11,10 +11,10 @@ interface SummaryRow {
 }
 
 const PUB_TYPES = [
-  { key: 'Conference', label: 'Conference Paper', icon: '🎤' },
-  { key: 'Book Chapter', label: 'Book Chapter', icon: '📚' },
-  { key: 'Article', label: 'Article', icon: '📄' },
-  { key: 'Review', label: 'Review', icon: '🔍' },
+  { key: 'Conference', label: 'Conference Paper', icon: '' },
+  { key: 'Book Chapter', label: 'Book Chapter', icon: '' },
+  { key: 'Article', label: 'Article', icon: '' },
+  { key: 'Review', label: 'Review', icon: '' },
 ];
 
 @Component({
@@ -37,9 +37,7 @@ const PUB_TYPES = [
           </thead>
           <tbody>
             <tr *ngFor="let row of rows">
-              <td class="type-cell">
-                <span class="type-icon">{{ row.icon }}</span>{{ row.label }}
-              </td>
+              <td class="type-cell">{{ row.label }}</td>
               <td class="num-cell">{{ row.first }}</td>
               <td class="num-cell">{{ row.second }}</td>
               <td class="num-cell total-col">{{ row.total }}</td>
