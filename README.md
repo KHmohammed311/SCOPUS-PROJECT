@@ -134,5 +134,5 @@ private readonly API_KEY = 'VOTRE_CLE_API';
 
 ## Auteur
 
-Développé pour l'Université Mohammed V de Rabat.  
+Développé pour l'Université Mohammed V de Rabat par Mohammed Khelifi, Hamza Mantrach, Ismail Ait Moumad et Ali Moustadraf.
 Données scientifiques fournies par [Scopus / Elsevier](https://www.scopus.com) et [SCImago Journal Rank](https://www.scimagojr.com).
